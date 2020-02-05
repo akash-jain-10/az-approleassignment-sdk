@@ -7,6 +7,36 @@ import (
 	"io/ioutil"
 )
 
+// GetAppRoleAssignmentOnGroup gets AppRoleAssignments for a group Id and App Roles Assignment Object Id.
+// Returns App Role Assignment Struct on Successful Response or Error incase something went wrong
+func (c *AzureClient) GetAppRoleAssignmentOnGroup(groupID, appRoleAssignmentID string) (*AppRolesAssignment, error) {
+	url := GRAPH_API_BASE_URL + c.tenantID + "/groups/" + groupID + "/appRoleAssignments/" + appRoleAssignmentID
+	req, err := c.NewRequest("GET", url, nil)
+	if err != nil {
+		panic(err)
+	}
+	q := req.URL.Query()
+	q.Add("api-version", API_VERSION)
+	req.URL.RawQuery = q.Encode()
+
+	appRoleAssignment := new(AppRolesAssignment)
+
+	resp, err := c.Do(context.Background(), req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+	if json.Unmarshal(body, &appRoleAssignment) != nil {
+		return nil, err
+	}
+
+	return appRoleAssignment, err
+}
+
 // GetAppRoleAssignmentsForGroup gets AppRoleAssignments for a group Id.
 // Returns Group Struct on Successful Response or Error incase something went wrong
 func (c *AzureClient) GetAppRoleAssignmentsForGroup(groupID string) (*Group, error) {
